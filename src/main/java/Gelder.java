@@ -22,7 +22,6 @@ public class Gelder {
         List<Integer> measures = new ArrayList<Integer>();
         Integer n = 1;
         Integer radius = 2*n+1;
-        Double lnRadius = Math.log(radius);
         double[] rgb = image.get(x,y);
         Integer centerValue = getIntance(rgb);
         measures.add(1);
@@ -68,7 +67,7 @@ public class Gelder {
         return result;
     }
 
-    public List<Double>[][] getMultifractalMatrix(Integer r, Integer step,double[][] gelderMatrix,int[][] classesMatrix,Integer steps){
+    public List<Double>[][] getMultifractalMatrix(Integer r, Integer step,int[][] classesMatrix,Integer steps){
         List<Double> [][] multifractalSpectrs = new List[image.rows()][image.cols()];
         Map<Integer,Integer> [][] multifractalSpectrsNumbers = new Map[image.rows()][image.cols()];
         Integer n = (r-1)/2;
@@ -92,7 +91,7 @@ public class Gelder {
                     if(value==1||value==0){
                         partOfMultifractalSpectr = 0.0;
                     } else {
-                        partOfMultifractalSpectr = Math.log(value)/Math.log(n);
+                        partOfMultifractalSpectr = Math.log(value)/Math.log(r);
                     }
                     multifractalSpectrs[i][j].add(partOfMultifractalSpectr);
                 }
