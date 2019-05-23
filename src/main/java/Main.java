@@ -3,6 +3,7 @@ import org.opencv.highgui.Highgui;
 import org.opencv.highgui.Highgui.*;
 
 import javax.swing.*;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -14,7 +15,7 @@ public class Main{
         nu.pattern.OpenCV.loadLibrary();
     }
     public static void main(String[] args){
-        Mat image = Highgui.imread("/Users/ewigkeit/Downloads/myfig244.png");
+        Mat image = Highgui.imread("/Users/erzenavampilova/Desktop/study/Диплом/get picture for diplom/draft/myfig.png");
         //Mat image = Highgui.imread("/Users/ewigkeit/maps/2019.png");
         Gelder gelder = new Gelder();
         gelder.setImage(image);
@@ -37,9 +38,13 @@ public class Main{
                 //allLnMeasure.add(lnMeasures);
 
                 gelderMatrix[i][j]= LinearRegression.count(lnRadiuses,lnMeasures);
+                System.out.print(gelderMatrix[i][j]+" ");
                 gelderValues.add(LinearRegression.count(lnRadiuses,lnMeasures));
             }
+            System.out.println();
         }
+
+        System.out.println();
 
         /*List<Double> gelderValues = allLnMeasure.stream()
                 .map(lnMeasure -> LinearRegression.count(lnRadiuses,lnMeasure))
