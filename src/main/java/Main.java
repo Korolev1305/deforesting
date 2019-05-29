@@ -1,18 +1,10 @@
-import jdk.nashorn.internal.objects.annotations.Function;
-import org.apache.commons.math3.ml.clustering.KMeansPlusPlusClusterer;
-import org.apache.commons.math3.ml.distance.DistanceMeasure;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfByte;
 import org.opencv.highgui.Highgui;
-import org.opencv.imgproc.*;
-import org.opencv.highgui.Highgui.*;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
-import java.io.ByteArrayInputStream;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -112,20 +104,34 @@ public class Main {
     public static void main(String[] args) {
         //Mat image = Highgui.imread("/Users/ewigkeit/Downloads/myfig244.png");
         //Mat image = Highgui.imread("/Users/ewigkeit/Downloads/BaikaldotsWithouBorder.png");
-        //Mat image = Highgui.imread("/Users/ewigkeit/Downloads/KavkazWithoutBorder.png");
+        //Mat image = Highgui.imread("/Users/ewigkeit/Downloads/KavkazSize.png");
+        //Mat image = Highgui.imread("/Users/ewigkeit/Downloads/KavkazSmall.png");
+        //Mat image = Highgui.imread("/Users/ewigkeit/Downloads/KavkazMedium.png");
         //Mat image = Highgui.imread("/Users/ewigkeit/Downloads/Kavkaz2WithoutBorder.png");
+        //Mat image = Highgui.imread("/Users/ewigkeit/Downloads/BaikalSmall.png");
+
         //Mat image = Highgui.imread("/Users/ewigkeit/maps/2019.png");
         Mat image = Highgui.imread("/Users/ewigkeit/maps/2019-.png");
+        //Mat image = Highgui.imread("/Users/ewigkeit/maps/1985-.png");
         //Mat image = Highgui.imread("/Users/ewigkeit/maps/2019--.png");
+
+        int variant=1;
         Gelder gelder = new Gelder();
         gelder.setImage(image);
-        gelder.setMaxWindowRadius(9);
         //List<List<Double>> allLnMeasure = new ArrayList<>();
         List<Integer> radiuses = new ArrayList<>();
         List<Double> lnRadiuses = new ArrayList<>();
-        radiuses.addAll(Arrays.asList(1, 3, 5, 7, 9));
+        if(variant==3) {
+            radiuses.addAll(Arrays.asList(1, 3, 5, 7, 9, 15, 20));
+        } else {
+            radiuses.addAll(Arrays.asList(1, 3, 5, 7, 9));
+        }
         gelder.setRadiuses(radiuses);
-        lnRadiuses.addAll(Arrays.asList(Math.log(1), Math.log(3), Math.log(5), Math.log(7), Math.log(9)));
+        if(variant == 3) {
+            lnRadiuses.addAll(Arrays.asList(Math.log(1), Math.log(3), Math.log(5), Math.log(7), Math.log(9), Math.log(15), Math.log(20)));
+        } else{
+            lnRadiuses.addAll(Arrays.asList(Math.log(1), Math.log(3), Math.log(5), Math.log(7), Math.log(9)));
+        }
         Double maxLnMeasure = 0.0;
         double[][] gelderMatrix = new double[image.rows()][image.cols()];
         int[][] classesMatrix = new int[image.rows()][image.cols()];
@@ -182,10 +188,15 @@ public class Main {
             }
             //System.out.println();
         }
-
+        List<Double>[][] spectrsMatrix;
         System.out.println();
-        List<Integer> radiusesCoverage = Arrays.asList(1, 2, 3);
-        List<Double>[][] spectrsMatrix = gelder.getMultifractalMatrix(5, classesMatrix, 10, radiusesCoverage);
+        if(variant==3) {
+            List<Integer> radiusesCoverage = Arrays.asList(1, 2, 3);
+            spectrsMatrix = gelder.getMultifractalMatrix(3, classesMatrix, 10, radiusesCoverage);
+        } else {
+            List<Integer> radiusesCoverage = Arrays.asList(1, 2, 3);
+            spectrsMatrix = gelder.getMultifractalMatrix(5, classesMatrix, 10, radiusesCoverage);
+        }
 
 //        for (int i = 0; i < image.rows(); i ++) {
 //            for (int j = 0; j < image.cols(); j ++) {
@@ -215,8 +226,6 @@ public class Main {
         pointsForCentersOld.get(0).add(randomPoint);
         Integer maxIterations = 100;
         Integer[][] clustersMatrix = new Integer[spectrsMatrix.length][spectrsMatrix[0].length];
-
-        int variant=1;
 
         if(variant==1) {
             centers.add(spectrsMatrix[623][141]);
@@ -288,22 +297,25 @@ public class Main {
 
         }
 
-        long forest=0;
-        long other=0;
+        if(variant==1) {
+            long forest = 0;
+            long other = 0;
 
-        for (int i = 0; i < spectrsMatrix.length; i ++) {
-            for (int j = 0; j < spectrsMatrix[0].length; j ++) {
-                //System.out.print(clustersMatrix[i][j] + " ");
-                if(clustersMatrix[i][j]==1){
-                    forest++;
-                } else {
-                    other++;
+            for (int i = 0; i < spectrsMatrix.length; i++) {
+                for (int j = 0; j < spectrsMatrix[0].length; j++) {
+                    //System.out.print(clustersMatrix[i][j] + " ");
+                    if (clustersMatrix[i][j] == 1) {
+                        forest++;
+                    } else {
+                        other++;
+                    }
                 }
+                //System.out.println();
             }
-            //System.out.println();
-        }
 
-        System.out.println("Процент соотношения лесных массивов ко всей территории: "+(double)forest/(double)(spectrsMatrix.length*spectrsMatrix[0].length)*100+"%");
+            System.out.println();
+            System.out.println("Процент соотношения лесных массивов ко всей территории: " + (double) forest / (double) (spectrsMatrix.length * spectrsMatrix[0].length) * 100 + "%");
+        }
 
         List<List<Double>> colors = new ArrayList<>();
         for(int i=0;i<k;i++){
@@ -327,12 +339,10 @@ public class Main {
         JLabel label = new JLabel(new ImageIcon(bufferedImage));
         panel.add(label);
 
-        // main window
         JFrame.setDefaultLookAndFeelDecorated(true);
-        JFrame frame = new JFrame("JPanel Example");
+        JFrame frame = new JFrame("Clustering result");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // add the Jpanel to the main window
         frame.add(panel);
 
         frame.pack();

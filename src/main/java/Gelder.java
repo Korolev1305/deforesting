@@ -6,7 +6,6 @@ import java.util.*;
 
 @Data
 public class Gelder {
-    private Integer maxWindowRadius;
     private Mat image;
     private List<Integer> radiuses;
     private Double minGelder;
@@ -95,9 +94,9 @@ public class Gelder {
         for (int co = 0; co < radiuses.size(); co++) {
             for (int k = 0; k <= 2 * n; k++) {
                 for (int z = 0; z <= 2 * n; z++) {
-                    System.out.print(coverage[k][z].get(co) + " ");
+                    //System.out.print(coverage[k][z].get(co) + " ");
                 }
-                System.out.println();
+                //System.out.println();
             }
             System.out.println();
             System.out.println();
