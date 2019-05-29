@@ -2,16 +2,39 @@ import jdk.nashorn.internal.objects.annotations.Function;
 import org.apache.commons.math3.ml.clustering.KMeansPlusPlusClusterer;
 import org.apache.commons.math3.ml.distance.DistanceMeasure;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfByte;
 import org.opencv.highgui.Highgui;
+import org.opencv.imgproc.*;
 import org.opencv.highgui.Highgui.*;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
+import java.io.ByteArrayInputStream;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class Main {
     static {
         nu.pattern.OpenCV.loadLibrary();
+    }
+
+    public static Image toBufferedImage(Mat m){
+        int type = BufferedImage.TYPE_BYTE_GRAY;
+        if ( m.channels() > 1 ) {
+            type = BufferedImage.TYPE_3BYTE_BGR;
+        }
+        int bufferSize = m.channels()*m.cols()*m.rows();
+        byte [] b = new byte[bufferSize];
+        m.get(0,0,b); // get all the pixels
+        BufferedImage image = new BufferedImage(m.cols(),m.rows(), type);
+        final byte[] targetPixels = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
+        System.arraycopy(b, 0, targetPixels, 0, b.length);
+        return image;
+
     }
 
     public static double getDistance(List<Double> x, List<Double> y){
@@ -60,18 +83,40 @@ public class Main {
         return minDistanceCluster;
     }
 
+    public static boolean cldc(List<List<Double>> clusterPointEarly, List<List<Double>> clusterPointNow){
+        boolean result = true;
+
+        for(int i=0;i<clusterPointEarly.size();i++){
+            if(!clusterPointEarly.contains(clusterPointNow.get(i))||!clusterPointNow.contains(clusterPointEarly.get(i))){
+                result = false;
+            }
+        }
+
+        return result;
+    }
+
     public static boolean clusterDoNotChange(List<List<Double>> clusterPointEarly, List<List<Double>> clusterPointNow){
-        if(clusterPointEarly.containsAll(clusterPointNow)&&clusterPointNow.containsAll(clusterPointEarly)){
-            return true;
-        } else {
+        if(clusterPointEarly.size()!=clusterPointNow.size()) {
             return false;
         }
+        else {
+            return true;
+        }
+//        if(clusterPointEarly.containsAll(clusterPointNow)&&clusterPointNow.containsAll(clusterPointEarly)){
+//            return true;
+//        } else {
+//            return false;
+//        }
     }
 
     public static void main(String[] args) {
         //Mat image = Highgui.imread("/Users/ewigkeit/Downloads/myfig244.png");
-        Mat image = Highgui.imread("/Users/ewigkeit/Downloads/BaikaldotsWithouBorder.png");
+        //Mat image = Highgui.imread("/Users/ewigkeit/Downloads/BaikaldotsWithouBorder.png");
+        //Mat image = Highgui.imread("/Users/ewigkeit/Downloads/KavkazWithoutBorder.png");
+        //Mat image = Highgui.imread("/Users/ewigkeit/Downloads/Kavkaz2WithoutBorder.png");
         //Mat image = Highgui.imread("/Users/ewigkeit/maps/2019.png");
+        Mat image = Highgui.imread("/Users/ewigkeit/maps/2019-.png");
+        //Mat image = Highgui.imread("/Users/ewigkeit/maps/2019--.png");
         Gelder gelder = new Gelder();
         gelder.setImage(image);
         gelder.setMaxWindowRadius(9);
@@ -79,6 +124,7 @@ public class Main {
         List<Integer> radiuses = new ArrayList<>();
         List<Double> lnRadiuses = new ArrayList<>();
         radiuses.addAll(Arrays.asList(1, 3, 5, 7, 9));
+        gelder.setRadiuses(radiuses);
         lnRadiuses.addAll(Arrays.asList(Math.log(1), Math.log(3), Math.log(5), Math.log(7), Math.log(9)));
         Double maxLnMeasure = 0.0;
         double[][] gelderMatrix = new double[image.rows()][image.cols()];
@@ -88,7 +134,7 @@ public class Main {
             for (int j = 0; j < image.cols(); j++) {
                 List<Integer> measures = gelder.measure(i, j, 6);
                 List<Double> lnMeasures = measures.stream()
-                        .map(a -> Math.log(a))
+                        .map(a -> a==0?0:Math.log(a))
                         .collect(Collectors.toList());
                 //allLnMeasure.add(lnMeasures);
 
@@ -138,26 +184,26 @@ public class Main {
         }
 
         System.out.println();
-        List<Integer> radiusesCoverage = Arrays.asList(1, 3, 5);
-        List<Double>[][] spectrsMatrix = gelder.getMultifractalMatrix(25, 3, classesMatrix, 10, radiusesCoverage);
+        List<Integer> radiusesCoverage = Arrays.asList(1, 2, 3);
+        List<Double>[][] spectrsMatrix = gelder.getMultifractalMatrix(5, classesMatrix, 10, radiusesCoverage);
 
-        for (int i = 0; i < image.rows(); i += 3) {
-            for (int j = 0; j < image.cols(); j += 3) {
-                System.out.print("[");
-                for (int k = 0; k < spectrsMatrix[i][j].size(); k++) {
+//        for (int i = 0; i < image.rows(); i ++) {
+//            for (int j = 0; j < image.cols(); j ++) {
+//                System.out.print("[");
+//                for (int k = 0; k < spectrsMatrix[i][j].size(); k++) {
+//
+//
+//                    System.out.printf("%6.3f", spectrsMatrix[i][j].get(k));
+//
+//                    System.out.print(" ");
+//                }
+//                System.out.print("]");
+//
+//            }
+//            System.out.println();
+//        }
 
-
-                    System.out.printf("%6.3f", spectrsMatrix[i][j].get(k));
-
-                    System.out.print(" ");
-                }
-                System.out.print("]");
-
-            }
-            System.out.println();
-        }
-
-        int k = 6;
+        int k = 2;
 
         List<List<Double>> centers = new ArrayList<>();
         List<List<List<Double>>> pointsForCenters = new ArrayList<>();
@@ -170,24 +216,43 @@ public class Main {
         Integer maxIterations = 100;
         Integer[][] clustersMatrix = new Integer[spectrsMatrix.length][spectrsMatrix[0].length];
 
-        for (int i = 0; i < k; i++) {
-            for(;;){
-                Integer x = new Random().nextInt(spectrsMatrix.length / 3);
-                Integer y = new Random().nextInt(spectrsMatrix[0].length / 3);
-                if(!centers.contains(spectrsMatrix[x*3][y*3])){
-                    centers.add(spectrsMatrix[x * 3][y * 3]);
-                    break;
-                }
-            }
+        int variant=1;
+
+        if(variant==1) {
+            centers.add(spectrsMatrix[623][141]);
+            centers.add(spectrsMatrix[425][283]);
             pointsForCenters.add(new ArrayList<>());
+            pointsForCenters.add(new ArrayList<>());
+        } else if(variant==2) {
+            centers.add(spectrsMatrix[236][157]);
+            centers.add(spectrsMatrix[20][247]);
+            centers.add(spectrsMatrix[342][157]);
+            centers.add(spectrsMatrix[118][20]);
+            pointsForCenters.add(new ArrayList<>());
+            pointsForCenters.add(new ArrayList<>());
+            pointsForCenters.add(new ArrayList<>());
+            pointsForCenters.add(new ArrayList<>());
+        }else {
+            for (int i = 0; i < k; i++) {
+                for(;;){
+                    Integer x = new Random().nextInt(spectrsMatrix.length);
+                    Integer y = new Random().nextInt(spectrsMatrix[0].length);
+                    if(!centers.contains(spectrsMatrix[x][y])){
+                        centers.add(spectrsMatrix[x][y]);
+                        break;
+                    }
+                }
+                pointsForCenters.add(new ArrayList<>());
+            }
         }
+
 
         for (int q = 0; q < maxIterations; q++) {
 
             System.out.println("Iteration: " + (q+1));
 
-            for (int i = 0; i < spectrsMatrix.length; i += 3) {
-                for (int j = 0; j < spectrsMatrix[0].length; j += 3) {
+            for (int i = 0; i < spectrsMatrix.length; i ++) {
+                for (int j = 0; j < spectrsMatrix[0].length; j ++) {
                     clustersMatrix[i][j] = getClusterNumber(centers, spectrsMatrix[i][j]);
                     pointsForCenters.get(clustersMatrix[i][j] - 1).add(spectrsMatrix[i][j]);
                 }
@@ -223,11 +288,55 @@ public class Main {
 
         }
 
-        for (int i = 0; i < spectrsMatrix.length; i += 3) {
-            for (int j = 0; j < spectrsMatrix[0].length; j += 3) {
-                System.out.print(clustersMatrix[i][j] + " ");
+        long forest=0;
+        long other=0;
+
+        for (int i = 0; i < spectrsMatrix.length; i ++) {
+            for (int j = 0; j < spectrsMatrix[0].length; j ++) {
+                //System.out.print(clustersMatrix[i][j] + " ");
+                if(clustersMatrix[i][j]==1){
+                    forest++;
+                } else {
+                    other++;
+                }
             }
-            System.out.println();
+            //System.out.println();
         }
+
+        System.out.println("Процент соотношения лесных массивов ко всей территории: "+(double)forest/(double)(spectrsMatrix.length*spectrsMatrix[0].length)*100+"%");
+
+        List<List<Double>> colors = new ArrayList<>();
+        for(int i=0;i<k;i++){
+            List<Double> oneColor = new ArrayList<>();
+            for(int j=0;j<3;j++) {
+                Integer randomColor = new Random().nextInt(255);
+                oneColor.add(randomColor.doubleValue());
+            }
+            colors.add(oneColor);
+        }
+
+        for(int i=0;i< spectrsMatrix.length;i ++){
+            for(int j=0;j<spectrsMatrix[0].length;j++){
+                        image.put(i,j,colors.get(clustersMatrix[i][j]-1).stream().mapToDouble(Double::doubleValue).toArray());
+            }
+        }
+
+        JPanel panel = new JPanel();
+
+        Image bufferedImage = toBufferedImage(image);
+        JLabel label = new JLabel(new ImageIcon(bufferedImage));
+        panel.add(label);
+
+        // main window
+        JFrame.setDefaultLookAndFeelDecorated(true);
+        JFrame frame = new JFrame("JPanel Example");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // add the Jpanel to the main window
+        frame.add(panel);
+
+        frame.pack();
+        frame.setVisible(true);
+
     }
 }

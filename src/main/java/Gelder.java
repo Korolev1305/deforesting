@@ -8,6 +8,7 @@ import java.util.*;
 public class Gelder {
     private Integer maxWindowRadius;
     private Mat image;
+    private List<Integer> radiuses;
     private Double minGelder;
     private Double maxGelder;
 
@@ -16,29 +17,29 @@ public class Gelder {
     }
 
     public List<Integer> measure(Integer x, Integer y, Integer eps) {
-        List<Integer> measures = new ArrayList<Integer>();
-        Integer n = 1;
-        Integer radius = 2 * n + 1;
+        List<Integer> measures = new ArrayList<>();
+        //Integer n = 1;
+        //Integer radius = 2 * n + 1;
         double[] rgb = image.get(x, y);
         Integer centerValue = getIntance(rgb);
-        measures.add(1);
-        while (radius <= maxWindowRadius) {
-            Integer measure = 0;
-            for (int i = x - n; i <= x + n; i++) {
-                for (int j = y - n; j <= y + n; j++) {
-                    Integer pixelIntance = 255;
-                    if (i > 0 && i < image.rows() && j > 0 && j < image.cols()) {
-                        pixelIntance = getIntance(image.get(i, j));
-                    }
-                    if (Math.abs(centerValue - pixelIntance) <= eps) {
-                        measure++;
+        //measures.add(1);
+        for(Integer radius : radiuses){
+            int measure = 0;
+            int n=(radius-1)/2;
+            if(radius!=1) {
+                for (int i = x - n; i <= x + n; i++) {
+                    for (int j = y - n; j <= y + n; j++) {
+                        Integer pixelIntance = 255;
+                        if (i >= 0 && i < image.rows() && j >= 0 && j < image.cols()) {
+                            pixelIntance = getIntance(image.get(i, j));
+                        }
+                        if (Math.abs(centerValue - pixelIntance) <= eps) {
+                            measure++;
+                        }
                     }
                 }
-            }
-            measures.add(measure);
-            n++;
-            radius = 2 * n + 1;
-
+                measures.add(measure);
+            } else measures.add(1);
         }
 
         return measures;
@@ -64,9 +65,8 @@ public class Gelder {
         return result;
     }
 
-    public List<Double>[][] getMultifractalMatrix(Integer r, Integer step, int[][] classesMatrix, Integer steps, List<Integer> radiuses) {
+    public List<Double>[][] getMultifractalMatrix(Integer r, int[][] classesMatrix, Integer steps, List<Integer> radiuses) {
         List<Double>[][] multifractalSpectrs = new List[image.rows()][image.cols()];
-        Map<Integer, Integer>[][] multifractalSpectrsNumbers = new Map[image.rows()][image.cols()];
         Integer n = (r - 1) / 2;
         List<Integer>[][] coverage = new List[r][r];
 
@@ -102,29 +102,32 @@ public class Gelder {
             System.out.println();
             System.out.println();
         }
-        for (int i = 0; i < image.rows(); i += step) {
-            for (int j = 0; j < image.cols(); j += step) {
+        for (int i = 0; i < image.rows(); i ++) {
+            for (int j = 0; j < image.cols(); j ++) {
                 multifractalSpectrs[i][j] = new ArrayList<>();
                 for (int s = 1; s <= steps; s++) {
                     List<Set<Integer>> level = new ArrayList<>();
                     for (int co = 0; co < radiuses.size(); co++) {
                         level.add(new HashSet<>());
                     }
-                    for (int k = i; k <= i+2 * n; k++) {
-                        for (int z = j; z <= j+2 * n; z++) {
+                    for (int k = i-n; k <= i+n; k++) {
+                        for (int z = j-n; z <= j+n; z++) {
 
                             //Выделяем множество точек каждого уровня
                             //Считаем число покрытий для каждого радиуса каждого уровня
                             //Аппроксимируем значение отношений логарифма количества к логарифму радиуса и записываем
                             Integer classNumber = steps;
-                            if (k > 0 && k < image.rows() && z > 0 && z < image.cols()) {
+                            if (k >=0 && k < image.rows() && z >= 0 && z < image.cols()) {
                                 classNumber = classesMatrix[k][z];
+                            } else {
+                                classNumber = 10;
                             }
                             if (classNumber == s) {
                                 for (int co = 0; co < radiuses.size(); co++) {
-                                    level.get(co).add(coverage[k-i][z-j].get(co));
+                                    level.get(co).add(coverage[k-(i-n)][z-(j-n)].get(co));
                                 }
                             }
+
                             //Integer count = multifractalSpectrsNumbers[i][j].getOrDefault(classNumber,0);
                             //multifractalSpectrsNumbers[i][j].put(classNumber,count+1);
                         }
