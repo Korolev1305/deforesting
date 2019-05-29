@@ -108,14 +108,14 @@ public class Main {
         //Mat image = Highgui.imread("/Users/ewigkeit/Downloads/KavkazSmall.png");
         //Mat image = Highgui.imread("/Users/ewigkeit/Downloads/KavkazMedium.png");
         //Mat image = Highgui.imread("/Users/ewigkeit/Downloads/Kavkaz2WithoutBorder.png");
-        //Mat image = Highgui.imread("/Users/ewigkeit/Downloads/BaikalSmall.png");
+        Mat image = Highgui.imread("/Users/ewigkeit/Downloads/BaikalSmall.png");
 
         //Mat image = Highgui.imread("/Users/ewigkeit/maps/2019.png");
-        Mat image = Highgui.imread("/Users/ewigkeit/maps/2019-.png");
+        //Mat image = Highgui.imread("/Users/ewigkeit/maps/2019-.png");
         //Mat image = Highgui.imread("/Users/ewigkeit/maps/1985-.png");
         //Mat image = Highgui.imread("/Users/ewigkeit/maps/2019--.png");
 
-        int variant=1;
+        int variant=3;
         Gelder gelder = new Gelder();
         gelder.setImage(image);
         //List<List<Double>> allLnMeasure = new ArrayList<>();
@@ -318,14 +318,26 @@ public class Main {
         }
 
         List<List<Double>> colors = new ArrayList<>();
-        for(int i=0;i<k;i++){
-            List<Double> oneColor = new ArrayList<>();
-            for(int j=0;j<3;j++) {
-                Integer randomColor = new Random().nextInt(255);
-                oneColor.add(randomColor.doubleValue());
-            }
-            colors.add(oneColor);
+        if(variant==3){
+            List<Double> centri = Arrays.asList(0.0,69.0,255.0);
+            List<Double> otherC = Arrays.asList(152.0,251.0,152.0);
+            colors.add(otherC);
+            colors.add(centri);
+        }else {
+            List<Double> otherColor = Arrays.asList(181.0,228.0,255.0);
+            List<Double> forestColor = Arrays.asList(0.0,128.0,0.0);
+            colors.add(forestColor);
+            colors.add(otherColor);
         }
+
+//        for(int i=0;i<k;i++){
+//            List<Double> oneColor = new ArrayList<>();
+//            for(int j=0;j<3;j++) {
+//                Integer randomColor = new Random().nextInt(255);
+//                oneColor.add(randomColor.doubleValue());
+//            }
+//            colors.add(oneColor);
+//        }
 
         for(int i=0;i< spectrsMatrix.length;i ++){
             for(int j=0;j<spectrsMatrix[0].length;j++){
